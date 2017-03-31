@@ -1,0 +1,7 @@
+sudo: required
+language: js
+
+
+
+notifications:
+  slack: twicecast-eip:fzwNN3MrxGQ7v6Bza2Bx9apE#travis
