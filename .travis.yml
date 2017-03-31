@@ -1,6 +1,5 @@
-sudo: required
-language: node-js
-node-js:
+language: node_js
+node_js:
   - "node"
   - "iojs"
 
