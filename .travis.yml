@@ -1,7 +1,8 @@
 sudo: required
-language: js
-
-
+language: node-js
+node-js:
+  - "node"
+  - "iojs"
 
 notifications:
   slack: twicecast-eip:fzwNN3MrxGQ7v6Bza2Bx9apE#travis
