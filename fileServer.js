@@ -46,7 +46,14 @@ function getFile(socket, json) {
 		mkdirp(path.dirname(socket.username + "/" + socket.project + "/" + json.name), function(err) {
 			if (err)
 				return;
-			
+			var totalContent = "";
+			for (i = 0; i < maxPart; i++)
+				totalContent += socket.contentList[json.name][i];
+			fs.writeFile(socket.username + "/" + socket.project + "/" + json.name, totalContent, function(err) {
+				if (err)
+					return;
+				console.log("Content successfully wrote");
+			});
 			socket.contentList[json.name] = [];
 		});
 	}
@@ -62,13 +69,13 @@ wss.on('connection', function(socket) {
 	socket.on('message', function(data, flags) {
 		try {
 			var result = JSON.parse(data);
+			console.log(JSON.stringify(result, null, 2));
 			if (!result.hasOwnProperty('type'))
 				socket.send('{"error":"Missing type message"}');
 			if (result.type == 'auth')
 				getAuth(socket, result);
 			if (result.type == "file")
 				getFile(socket, result);
-			console.log(JSON.stringify(result, null, 2));
 		}
 		catch (e) {
 			console.log(e);
