@@ -1,0 +1,24 @@
+{
+  "name": "file-ws-server",
+  "version": "0.1.0",
+  "description": "Server which receive files through websocket",
+  "main": "fileServer.js",
+  "scripts": {
+    "start": "node fileServer.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/songotony/FileWSServer.git"
+  },
+  "author": "TwiceCast",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/songotony/FileWSServer/issues"
+  },
+  "homepage": "https://github.com/songotony/FileWSServer#readme",
+  "dependencies": {
+    "mkdirp": "^0.5.1",
+    "ws": "^2.2.2"
+  }
+}
