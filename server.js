@@ -2,8 +2,14 @@ var server = require('http').createServer();
 var ws = require('ws');
 var jwt = require('jsonwebtoken');
 
-var config = require('./config.json');
 var file = require('./lib/file.js');
+
+var config = {};
+try {
+	config = require('./config.json');
+}
+catch (e) {
+}
 
 var wss = new ws.Server({server : server});
 
