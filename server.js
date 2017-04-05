@@ -1,6 +1,5 @@
 var server = require('http').createServer();
 var ws = require('ws');
-var jwt = require('jsonwebtoken');
 
 var file = require('./lib/file.js');
 
@@ -16,6 +15,7 @@ var wss = new ws.Server({server : server});
 wss.on('connection', function(socket) {
 	console.log("Client connected");
 	
+	socket.token = "";
 	socket.file = {
 		username : null,
 		project : null,
@@ -39,7 +39,7 @@ wss.on('connection', function(socket) {
 	});
 	
 	socket.on('authenticate', function(result) {
-		jwt.verify(result.token, config.key);
+		socket.token = result.token;
 	});
 	
 	socket.on('file', function(result) {
@@ -61,9 +61,6 @@ wss.on('connection', function(socket) {
 var port = 3005;
 if (config.hasOwnProperty('port') && typeof config.port == "number")
 	port = config.port;
-
-if (!config.hasOwnProperty('baseDir') || config.baseDir == null || config.baseDir == "")
-	config.baseDir = ".";
 
 if (!config.hasOwnProperty('key'))
 	config.key = "secret";
