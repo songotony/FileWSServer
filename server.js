@@ -1,8 +1,10 @@
 var server = require('http').createServer();
 var ws = require('ws');
-var jwt = require('jsonwebtoken');
 
 var file = require('./lib/file.js');
+var auth = require('./lib/auth.js');
+var responses = require('./lib/responses.js');
+var exceptions = require('./lib/exceptions.js');
 
 var config = {};
 try {
@@ -16,41 +18,67 @@ var wss = new ws.Server({server : server});
 wss.on('connection', function(socket) {
 	console.log("Client connected");
 	
+	socket.token = "";
 	socket.file = {
 		username : null,
 		project : null,
 		contentList : {}
+	};
+	socket.chat = {
+		username : null,
+		room : null
 	};
 	
 	socket.on('message', function(data, flags) {
 		try {
 			var event = JSON.parse(data);
 			console.log(JSON.stringify(event, null, 2));
-			if (!event.hasOwnProperty('type')) {
-				if (socket.readyState == ws.OPEN)
-					socket.send(JSON.stringify({error:"Missing type message"}));
-				return;
-			}
+			if (event.type == undefined || event.type == "") 
+				throw new exceptions.ParametersException("Missing type");
+			if (event.type == "message" || event.type == "close")
+				throw new exceptions.ParametersException("Wrong type");
 			this.emit(event.type, event);
 		}
 		catch (e) {
+			if (e.response != undefined && socket.readyState === ws.OPEN)
+				socket.send(JSON.stringify(new e.response(e.message)));
 			console.log(e);
 		}
 	});
 	
 	socket.on('authenticate', function(result) {
-		jwt.verify(result.token, config.key);
+		socket.token = result.token;
+		auth.verifyToken(socket, config.key);
 	});
 	
 	socket.on('file', function(result) {
-		if (!result.hasOwnProperty('subtype')) {
-			if (socket.readyState == ws.OPEN)
-				socket.send(JSON.stringify({error:"Missing subtype file message"}));
-			return;
+		try {
+			if (result.subtype == undefined || result.subtype == "")
+				throw new exceptions.ParametersException('Missing file subtype');
+			for (i = 0; i < file.funcs.length; i++)
+				if (file.funcs[i].subtype == result.subtype)
+					file.funcs[i].func(socket, result.data);
 		}
-		for (i = 0; i < file.funcs.length; i++)
-			if (file.funcs[i].subtype == result.subtype)
-				file.funcs[i].func(socket, result);
+		catch (e) {
+			if (e.response != undefined && socket.readyState === ws.OPEN)
+				socket.send(JSON.stringify(new e.response(e.message)));
+			console.log(e);
+		}
+	});
+	
+	socket.on('chat', function(result) {
+		try {
+			if (result.subtype == undefined || result.subtype == "") 
+				throw new exceptions.ParametersException('Missing chat subtype');
+			for (i = 0; i < chat.funcs.length; i++)
+				if (chat.funcs[i].subtype == result.subtype)
+					chat.funcs[i].func(socket, result.data, wss);
+		}
+		catch (e) {
+			if (e.response != undefined && socket.readyState === ws.OPEN)
+				socket.send(JSON.stringify(new e.response(e.message)));
+			console.log(e);
+		}
 	});
 	
 	socket.on('close', function(code, reason) {
@@ -61,9 +89,6 @@ wss.on('connection', function(socket) {
 var port = 3005;
 if (config.hasOwnProperty('port') && typeof config.port == "number")
 	port = config.port;
-
-if (!config.hasOwnProperty('baseDir') || config.baseDir == null || config.baseDir == "")
-	config.baseDir = ".";
 
 if (!config.hasOwnProperty('key'))
 	config.key = "secret";
