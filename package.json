@@ -1,7 +1,7 @@
 {
   "name": "file-ws-server",
-  "version": "0.2.0",
-  "description": "Server which receive files through websocket",
+  "version": "1.0.0",
+  "description": "Server which manage repository for TwiceCast project",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -12,7 +12,7 @@
     "url": "git+https://github.com/songotony/FileWSServer.git"
   },
   "author": "TwiceCast",
-  "license": "ISC",
+  "license": "CC-BY-NC",
   "bugs": {
     "url": "https://github.com/songotony/FileWSServer/issues"
   },
