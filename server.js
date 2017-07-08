@@ -7,13 +7,7 @@ var auth = require('./lib/auth');
 var pr = require('./lib/pullrequest');
 var responses = require('./lib/responses');
 var exceptions = require('./lib/exceptions');
-
-var config = {};
-try {
-	config = require('./config.json');
-}
-catch (e) {
-}
+var config = require('./lib/config');
 
 var wss = new ws.Server({server : server});
 
@@ -64,15 +58,25 @@ wss.on('connection', function(socket) {
 			if (result.data == undefined || result.data.token == undefined)
 				throw new exceptions.ParametersException("Missing token to authenticate");
 			socket.token = result.data.token;
-			auth.verify(socket, config.key);
-			if (result.data.file != undefined)
+			var decoded = auth.verify(socket, config.key);
+			if (result.data.file != undefined) {
 				file.auth(socket, result.data.file);
-			if (result.data.chat != undefined)
+				if (socket.file.username != decoded.streamername || socket.file.project.name != decoded.streamname)
+					throw new exceptions.AuthException("Your token doesn't match your provided values");
+			}
+			if (result.data.chat != undefined) {
 				chat.auth(socket, result.data.chat);
-			if (result.data.pullrequest != undefined)
+				if (socket.chat.username != decoded.username || socket.chat.room != decoded.room)
+					throw new exceptions.AuthException("Your token doesn't match your provided values");
+			}
+			if (result.data.pullrequest != undefined) {
 				pr.auth(socket, result.data.pullrequest, wss);
+				if (socket.pr.username != decoded.username || socket.file.username != decoded.streamername || socket.file.project.name != decoded.streamname)
+					throw new exceptions.AuthException("Your token doesn't match your provided values");
+			}
 		}
 		catch (e) {
+			socket.token = "";
 			if (e.response != undefined && socket.readyState === ws.OPEN)
 				socket.send(JSON.stringify(new e.response(e.message)));
 			console.log(e);
@@ -132,8 +136,6 @@ wss.on('connection', function(socket) {
 var port = 3005;
 if (config.port != undefined && typeof config.port == "number")
 	port = config.port;
-if (config.key == undefined || typeof config.key != "string" || config.key == "")
-	config.key = "secret";
 
 if (process.argv.length > 2) {
 	try {

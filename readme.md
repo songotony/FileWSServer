@@ -193,6 +193,8 @@ Streamer authentified can post a file by sending :
 
 `part` and `maxPart` can be ommited when sending the complete content.
 
+WARNING: `content` must be encoded in base64.
+
 The file will be saved at `config.baseDir/sender.username/sender.project/message.data.name`.
 
 In case of success, response will be :
