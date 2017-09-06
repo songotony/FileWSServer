@@ -94,7 +94,6 @@ wss.on('connection', function(socket) {
 		catch (e) {
 			if (e.response != undefined && socket.readyState === ws.OPEN)
 				socket.send(JSON.stringify(new e.response(e.message)));
-			console.log(e);
 		}
 	});
 	
