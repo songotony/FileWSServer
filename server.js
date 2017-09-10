@@ -8,11 +8,12 @@ var pr = require('./lib/pullrequest');
 var responses = require('./lib/responses');
 var exceptions = require('./lib/exceptions');
 var config = require('./lib/config');
+var console = require('./lib/logger');
 
 var wss = new ws.Server({server : server});
 
 wss.on('connection', function(socket) {
-	console.log("Client connected");
+	console.log("New client connected");
 	
 	socket.token = "";
 	socket.file = {
@@ -47,9 +48,12 @@ wss.on('connection', function(socket) {
 			this.emit(event.type, event);
 		}
 		catch (e) {
-			if (e.response != undefined && socket.readyState === ws.OPEN)
+			if (e.response != undefined && socket.readyState === ws.OPEN) {
 				socket.send(JSON.stringify(new e.response(e.message)));
-			console.log(e);
+				console.warn(e);
+			}
+			else
+				console.error(e);
 		}
 	});
 	
@@ -74,12 +78,16 @@ wss.on('connection', function(socket) {
 				if (socket.pr.username != decoded.username || socket.file.username != decoded.streamername || socket.file.project.name != decoded.streamname)
 					throw new exceptions.AuthException("Your token doesn't match your provided values");
 			}
+			console.log("Client " + (socket.file.username == null ? socket.chat.username == null ? socket.pr.username : socket.chat.username : socket.file.username) + " authentified");
 		}
 		catch (e) {
 			socket.token = "";
-			if (e.response != undefined && socket.readyState === ws.OPEN)
+			if (e.response != undefined && socket.readyState === ws.OPEN) {
 				socket.send(JSON.stringify(new e.response(e.message)));
-			console.log(e);
+				console.warn(e);
+			}
+			else
+				console.error(e);
 		}
 	});
 	
@@ -92,8 +100,16 @@ wss.on('connection', function(socket) {
 					file.funcs[i].func(socket, result.data);
 		}
 		catch (e) {
-			if (e.response != undefined && socket.readyState === ws.OPEN)
-				socket.send(JSON.stringify(new e.response(e.message)));
+			if (e.response != undefined && socket.readyState === ws.OPEN) {
+				var response = new e.response(e.message);
+				
+				if (result.data && result.data.name)
+					response.file = result.data.name;
+				socket.send(JSON.stringify(response));
+				console.warn(e);
+			}
+			else
+				console.error(e);
 		}
 	});
 	
@@ -106,9 +122,12 @@ wss.on('connection', function(socket) {
 					chat.funcs[i].func(socket, result.data, wss);
 		}
 		catch (e) {
-			if (e.response != undefined && socket.readyState === ws.OPEN)
+			if (e.response != undefined && socket.readyState === ws.OPEN) {
 				socket.send(JSON.stringify(new e.response(e.message)));
-			console.log(e);
+				console.warn(e);
+			}
+			else
+				console.error(e);
 		}
 	});
 	
@@ -121,35 +140,41 @@ wss.on('connection', function(socket) {
 					pr.funcs[i].func(socket, result.data, wss);
 		}
 		catch (e) {
-			if (e.response != undefined && socket.readyState === ws.OPEN)
+			if (e.response != undefined && socket.readyState === ws.OPEN) {
 				socket.send(JSON.stringify(new e.response(e.message)));
-			console.log(e);
+				console.warn(e);
+			}
+			else
+				console.error(e);
 		}
 	});
 	
 	socket.on('close', function(code, reason) {
-		console.log("Client disconnection with code " + code + (reason != "" ? " with reason " + reason : ""));
+		console.log("Client disconnection with code " + code + (reason && reason != "" ? " with reason " + reason : ""));
 	});
 });
 
-var port = 3005;
-if (config.port != undefined && typeof config.port == "number")
-	port = config.port;
 
-if (process.argv.length > 2) {
+function main() {
+	var port = 3005;
+
+	if (config.port != undefined && typeof config.port == "number")
+		port = config.port;
+	if (process.argv.length > 2) {
+		try {
+			if (!isNaN(process.argv[2]))
+				port = parseInt(process.argv[2]);
+		} catch (e) {
+			
+		}
+	}
 	try {
-		if (!isNaN(process.argv[2]))
-			port = parseInt(process.argv[2]);
-	} catch (e) {
-		
+		server.listen(port);
+		console.log('Server listening on ' + port + ' !');
+	}
+	catch (e) {
+		console.error(e);
 	}
 }
 
-console.log('Server listening on ' + port + ' !');
-
-try {
-	server.listen(port);
-}
-catch (e) {
-	console.log(e);
-}
+main();
