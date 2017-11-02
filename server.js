@@ -40,11 +40,17 @@ wss.on('connection', function(socket) {
 	
 	socket.on('message', function(data, flags) {
 		try {
-			var event = JSON.parse(data);
+			try {
+				var event = JSON.parse(data);
+			} catch (e) {
+				throw new exceptions.ParametersException(e.message);
+			}
 			if (event.type == undefined || event.type == "") 
 				throw new exceptions.ParametersException("Missing type");
 			if (event.type == "message" || event.type == "close")
 				throw new exceptions.ParametersException("Wrong type");
+			if (event.type != "file" && event.type != "chat" && event.type != "pullrequest")
+				throw new exceptions.ParametersException("Undefined type");
 			this.emit(event.type, event);
 		}
 		catch (e) {
@@ -78,6 +84,8 @@ wss.on('connection', function(socket) {
 				if (socket.pr.username != decoded.username || socket.file.username != decoded.streamername || socket.file.project.name != decoded.streamname)
 					throw new exceptions.AuthException("Your token doesn't match your provided values");
 			}
+			if (socket.readyState == ws.OPEN)
+				socket.send(JSON.stringify(new responses.OK("authentication", "OK"));
 			console.log("Client " + (socket.file.username == null ? socket.chat.username == null ? socket.pr.username : socket.chat.username : socket.file.username) + " authentified");
 		}
 		catch (e) {
@@ -95,9 +103,12 @@ wss.on('connection', function(socket) {
 		try {
 			if (result.subtype == undefined || result.subtype == "")
 				throw new exceptions.ParametersException('Missing file subtype');
-			for (i = 0; i < file.funcs.length; i++)
+			var i = 0;
+			for (; i < file.funcs.length; i++)
 				if (file.funcs[i].subtype == result.subtype)
 					file.funcs[i].func(socket, result.data);
+			if (i == file.funcs.length)
+				throw new exceptions.ParametersException('Undefined file subtype');
 		}
 		catch (e) {
 			if (e.response != undefined && socket.readyState === ws.OPEN) {
@@ -117,9 +128,12 @@ wss.on('connection', function(socket) {
 		try {
 			if (result.subtype == undefined || result.subtype == "") 
 				throw new exceptions.ParametersException('Missing chat subtype');
-			for (i = 0; i < chat.funcs.length; i++)
+			var i = 0;
+			for (; i < chat.funcs.length; i++)
 				if (chat.funcs[i].subtype == result.subtype)
 					chat.funcs[i].func(socket, result.data, wss);
+			if (i == chat.funcs.length)
+				throw new exceptions.ParametersException('Undefined chat subtype');
 		}
 		catch (e) {
 			if (e.response != undefined && socket.readyState === ws.OPEN) {
@@ -135,9 +149,12 @@ wss.on('connection', function(socket) {
 		try {
 			if (result.subtype == undefined || result.subtype == "")
 				throw new exceptions.ParametersException('Missing pull request subtype');
-			for (i = 0; i < pr.funcs.length; i++)
+			var i = 0;
+			for (; i < pr.funcs.length; i++)
 				if (pr.funcs[i].subtype == result.subtype)
 					pr.funcs[i].func(socket, result.data, wss);
+			if (i == pr.funcs.length)
+				throw new exceptions.ParametersException('Undefined pull request subtype');
 		}
 		catch (e) {
 			if (e.response != undefined && socket.readyState === ws.OPEN) {
