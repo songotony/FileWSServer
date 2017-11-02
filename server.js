@@ -85,7 +85,7 @@ wss.on('connection', function(socket) {
 					throw new exceptions.AuthException("Your token doesn't match your provided values");
 			}
 			if (socket.readyState == ws.OPEN)
-				socket.send(JSON.stringify(new responses.OK("authentication", "OK"));
+				socket.send(JSON.stringify(new responses.OK("authentication", "OK")));
 			console.log("Client " + (socket.file.username == null ? socket.chat.username == null ? socket.pr.username : socket.chat.username : socket.file.username) + " authentified");
 		}
 		catch (e) {
