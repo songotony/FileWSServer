@@ -49,7 +49,7 @@ wss.on('connection', function(socket) {
 				throw new exceptions.ParametersException("Missing type");
 			if (event.type == "message" || event.type == "close")
 				throw new exceptions.ParametersException("Wrong type");
-			if (event.type != "file" && event.type != "chat" && event.type != "pullrequest")
+			if (event.type != "authenticate" && event.type != "file" && event.type != "chat" && event.type != "pullrequest")
 				throw new exceptions.ParametersException("Undefined type");
 			this.emit(event.type, event);
 		}
