@@ -105,8 +105,10 @@ wss.on('connection', function(socket) {
 				throw new exceptions.ParametersException('Missing file subtype');
 			var i = 0;
 			for (; i < file.funcs.length; i++)
-				if (file.funcs[i].subtype == result.subtype)
+				if (file.funcs[i].subtype == result.subtype) {
 					file.funcs[i].func(socket, result.data);
+					break;
+				}
 			if (i == file.funcs.length)
 				throw new exceptions.ParametersException('Undefined file subtype');
 		}
@@ -130,8 +132,10 @@ wss.on('connection', function(socket) {
 				throw new exceptions.ParametersException('Missing chat subtype');
 			var i = 0;
 			for (; i < chat.funcs.length; i++)
-				if (chat.funcs[i].subtype == result.subtype)
+				if (chat.funcs[i].subtype == result.subtype) {
 					chat.funcs[i].func(socket, result.data, wss);
+					break;
+				}
 			if (i == chat.funcs.length)
 				throw new exceptions.ParametersException('Undefined chat subtype');
 		}
@@ -151,8 +155,10 @@ wss.on('connection', function(socket) {
 				throw new exceptions.ParametersException('Missing pull request subtype');
 			var i = 0;
 			for (; i < pr.funcs.length; i++)
-				if (pr.funcs[i].subtype == result.subtype)
+				if (pr.funcs[i].subtype == result.subtype) {
 					pr.funcs[i].func(socket, result.data, wss);
+					break;
+				}
 			if (i == pr.funcs.length)
 				throw new exceptions.ParametersException('Undefined pull request subtype');
 		}
