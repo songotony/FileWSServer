@@ -1,5 +1,6 @@
 var server = require('http').createServer();
 var ws = require('ws');
+var path = require('path');
 
 var file = require('./lib/file');
 var chat = require('./lib/chat');
@@ -14,7 +15,7 @@ var wss = new ws.Server({server : server});
 
 wss.on('connection', function(socket) {
 	console.log("New client connected");
-	
+
 	socket.token = "";
 	socket.file = {
 		username : null,
@@ -37,7 +38,7 @@ wss.on('connection', function(socket) {
 			dir : null
 		}
 	};
-	
+
 	socket.on('message', function(data, flags) {
 		try {
 			try {
@@ -45,7 +46,7 @@ wss.on('connection', function(socket) {
 			} catch (e) {
 				throw new exceptions.ParametersException(e.message);
 			}
-			if (event.type == undefined || event.type == "") 
+			if (event.type == undefined || event.type == "")
 				throw new exceptions.ParametersException("Missing type");
 			if (event.type == "message" || event.type == "close")
 				throw new exceptions.ParametersException("Wrong type");
@@ -62,7 +63,7 @@ wss.on('connection', function(socket) {
 				console.error(e);
 		}
 	});
-	
+
 	socket.on('authenticate', function(result) {
 		try {
 			if (result.data == undefined || result.data.token == undefined)
@@ -85,7 +86,7 @@ wss.on('connection', function(socket) {
 					throw new exceptions.AuthException("Your token doesn't match your provided values");
 			}
 			if (socket.readyState == ws.OPEN)
-				socket.send(JSON.stringify(new responses.OK("authentication", "OK")));
+				socket.send(JSON.stringify(new responses.OK("authentication", {message : "OK", opts : { sep : path.sep }})));
 			console.log("Client " + (socket.file.username == null ? socket.chat.username == null ? socket.pr.username : socket.chat.username : socket.file.username) + " authentified");
 		}
 		catch (e) {
@@ -98,7 +99,7 @@ wss.on('connection', function(socket) {
 				console.error(e);
 		}
 	});
-	
+
 	socket.on('file', function(result) {
 		try {
 			if (result.subtype == undefined || result.subtype == "")
@@ -106,7 +107,7 @@ wss.on('connection', function(socket) {
 			var i = 0;
 			for (; i < file.funcs.length; i++)
 				if (file.funcs[i].subtype == result.subtype) {
-					file.funcs[i].func(socket, result.data);
+					file.funcs[i].func(socket, result.data, wss);
 					break;
 				}
 			if (i == file.funcs.length)
@@ -115,7 +116,7 @@ wss.on('connection', function(socket) {
 		catch (e) {
 			if (e.response != undefined && socket.readyState === ws.OPEN) {
 				var response = new e.response(e.message);
-				
+
 				if (result.data && result.data.name)
 					response.file = result.data.name;
 				socket.send(JSON.stringify(response));
@@ -125,10 +126,10 @@ wss.on('connection', function(socket) {
 				console.error(e);
 		}
 	});
-	
+
 	socket.on('chat', function(result) {
 		try {
-			if (result.subtype == undefined || result.subtype == "") 
+			if (result.subtype == undefined || result.subtype == "")
 				throw new exceptions.ParametersException('Missing chat subtype');
 			var i = 0;
 			for (; i < chat.funcs.length; i++)
@@ -148,7 +149,7 @@ wss.on('connection', function(socket) {
 				console.error(e);
 		}
 	});
-	
+
 	socket.on('pullrequest', function(result) {
 		try {
 			if (result.subtype == undefined || result.subtype == "")
@@ -171,7 +172,7 @@ wss.on('connection', function(socket) {
 				console.error(e);
 		}
 	});
-	
+
 	socket.on('close', function(code, reason) {
 		console.log("Client disconnection with code " + code + (reason && reason != "" ? " with reason " + reason : ""));
 	});
@@ -188,7 +189,7 @@ function main() {
 			if (!isNaN(process.argv[2]))
 				port = parseInt(process.argv[2]);
 		} catch (e) {
-			
+
 		}
 	}
 	try {
