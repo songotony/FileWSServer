@@ -1,6 +1,7 @@
 var server = require('http').createServer();
 var ws = require('ws');
 var path = require('path');
+var rimraf = require('rimraf');
 
 var file = require('./lib/file');
 var chat = require('./lib/chat');
@@ -174,6 +175,12 @@ wss.on('connection', function(socket) {
 	});
 
 	socket.on('close', function(code, reason) {
+		if (socket.file.username != null && socket.pr.username == null)
+			rimraf(path.join(config.baseDir, socket.file.username), {disableGlob : true}, function(err) {
+				if (err)
+					return console.error(err);
+				console.log("Directory for client " + socket.file.username + " successfully cleaned");
+			});
 		console.log("Client disconnection with code " + code + (reason && reason != "" ? " with reason " + reason : ""));
 	});
 });
