@@ -36,7 +36,8 @@ wss.on('connection', function(socket) {
 			title : null,
 			description : null,
 			date : null,
-			dir : null
+			dir : null,
+			files : []
 		}
 	};
 
@@ -179,6 +180,9 @@ wss.on('connection', function(socket) {
 			rimraf(path.join(config.baseDir, socket.file.username), {disableGlob : true}, function(err) {
 				if (err)
 					return console.error(err);
+				for (let client of server.clients)
+					if (client !== socket && client.file.username == socket.file.username && client.file.project.name == socket.file.project.name)
+						client.send(JSON.stringify({type : "streamerDisconnected"}))
 				console.log("Directory for client " + socket.file.username + " successfully cleaned");
 			});
 		console.log("Client disconnection with code " + code + (reason && reason != "" ? " with reason " + reason : ""));
